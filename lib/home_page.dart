@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image/image.dart' as img;
+
 
 class TurnByTurnPage extends StatefulWidget {
   const TurnByTurnPage({super.key});
@@ -15,6 +19,47 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   StreamSubscription<NavInfoEvent>? _navInfoSubscription;
   NavInfo? _navInfo;
 
+  List<Marker> _markers = <Marker>[];
+  ImageDescriptor? _customIcon;
+
+  Future<void> _addCustomMarker() async {
+    final ByteData byteData = await rootBundle.load('assets/images/marker.png');
+    final Uint8List imageBytes = byteData.buffer.asUint8List();
+
+    final img.Image? originalImage = img.decodeImage(imageBytes);
+    if (originalImage == null) return;
+
+    final img.Image resized = img.copyResize(originalImage, width: 60, height: 60);
+    final Uint8List resizedBytes = Uint8List.fromList(img.encodePng(resized));
+
+    // Convert to ByteData
+    final ByteData resizedByteData = resizedBytes.buffer.asByteData();
+
+    // Register marker icon
+    _customIcon = await registerBitmapImage(
+      bitmap: resizedByteData,
+      imagePixelRatio: 2.0,
+    );
+
+    // Add marker
+    final MarkerOptions options = MarkerOptions(
+      position: LatLng(latitude: 37.791957, longitude: -122.412529),
+      icon: _customIcon!,
+      infoWindow: const InfoWindow(
+        title: 'Custom Marker',
+        snippet: 'This is a custom marker',
+      ),
+    );
+
+    final List<Marker?> addedMarkers = await _navigationViewController!.addMarkers([options]);
+    if (addedMarkers.isNotEmpty && addedMarkers.first != null) {
+      setState(() {
+        _markers.add(addedMarkers.first!);
+      });
+    }
+  }
+
+
   Future<void> _onViewCreated(GoogleNavigationViewController controller) async {
     _navigationViewController = controller;
     setState(() {});
@@ -22,6 +67,13 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
 
   Future<void> _startNavigation() async {
     _showMessage('Starting navigation.');
+
+    // 🔒 Request location permission
+    final locationStatus = await Permission.location.request();
+    if (!locationStatus.isGranted) {
+      _showMessage('Location permission denied.');
+      return;
+    }
 
     if (!await GoogleMapsNavigator.areTermsAccepted()) {
       await GoogleMapsNavigator.showTermsAndConditionsDialog(
@@ -34,7 +86,8 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
     await _setupListeners();
 
     await GoogleMapsNavigator.simulator.setUserLocation(
-        const LatLng(latitude: 37.528560, longitude: -122.361996));
+      const LatLng(latitude: 37.528560, longitude: -122.361996),
+    );
 
     final Destinations msg = Destinations(
       waypoints: <NavigationWaypoint>[
@@ -224,6 +277,10 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
               alignment: WrapAlignment.center,
               spacing: 10,
               children: [
+                ElevatedButton(
+                  onPressed: _addCustomMarker,
+                  child: Text('Add Marker'),
+                ),
                 ElevatedButton(
                   onPressed: _navigationRunning ? _stopNavigation : _startNavigation,
                   child: Text(_navigationRunning ? 'Stop navigation' : 'Start navigation'),
