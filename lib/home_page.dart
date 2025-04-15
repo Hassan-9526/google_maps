@@ -14,6 +14,7 @@ class TurnByTurnPage extends StatefulWidget {
 }
 
 class _TurnByTurnPageState extends State<TurnByTurnPage> {
+
   bool _navigationRunning = false;
   GoogleNavigationViewController? _navigationViewController;
   StreamSubscription<NavInfoEvent>? _navInfoSubscription;
@@ -22,6 +23,8 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   List<Marker> _markers = <Marker>[];
   ImageDescriptor? _customIcon;
 
+  Marker? _movingMarker;
+
   Future<void> _addCustomMarker() async {
     final ByteData byteData = await rootBundle.load('assets/images/marker.png');
     final Uint8List imageBytes = byteData.buffer.asUint8List();
@@ -29,7 +32,7 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
     final img.Image? originalImage = img.decodeImage(imageBytes);
     if (originalImage == null) return;
 
-    final img.Image resized = img.copyResize(originalImage, width: 60, height: 60);
+    final img.Image resized = img.copyResize(originalImage, width: 90, height: 90);
     final Uint8List resizedBytes = Uint8List.fromList(img.encodePng(resized));
 
     // Convert to ByteData
@@ -132,11 +135,41 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
     _navInfoSubscription = null;
   }
 
-  void _onNavInfoEvent(NavInfoEvent event) {
+  void _onNavInfoEvent(NavInfoEvent event) async {
     if (!mounted) return;
     setState(() {
       _navInfo = event.navInfo;
     });
+  }
+
+  Future<void> _updateMovingMarker(LatLng location) async {
+    if (_customIcon == null) {
+      await _addCustomMarker();
+    }
+
+    if (_movingMarker == null) {
+      // First time adding the moving marker
+      final MarkerOptions options = MarkerOptions(
+        position: location,
+        icon: _customIcon!,
+        infoWindow: const InfoWindow(title: 'You', snippet: 'Current location'),
+      );
+
+      final List<Marker?> addedMarkers = await _navigationViewController!.addMarkers([options]);
+      if (addedMarkers.isNotEmpty && addedMarkers.first != null) {
+        _movingMarker = addedMarkers.first;
+      }
+    } else {
+      // Update the position of the existing marker
+      final updatedMarker = _movingMarker!.copyWith(
+          options: _movingMarker!.options.copyWith(position: location)
+      );
+
+      final List<Marker?> markers = await _navigationViewController!.updateMarkers([updatedMarker]);
+      if (markers.isNotEmpty && markers.first != null) {
+        _movingMarker = markers.first;
+      }
+    }
   }
 
   Future<void> _stopNavigation() async {
