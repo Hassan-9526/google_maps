@@ -5,7 +5,6 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image/image.dart' as img;
 
-
 class TurnByTurnPage extends StatefulWidget {
   const TurnByTurnPage({super.key});
 
@@ -14,7 +13,6 @@ class TurnByTurnPage extends StatefulWidget {
 }
 
 class _TurnByTurnPageState extends State<TurnByTurnPage> {
-
   bool _navigationRunning = false;
   GoogleNavigationViewController? _navigationViewController;
   StreamSubscription<NavInfoEvent>? _navInfoSubscription;
@@ -26,13 +24,17 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   Marker? _movingMarker;
 
   Future<void> _addCustomMarker() async {
-    final ByteData byteData = await rootBundle.load('assets/images/marker.png');
+    final ByteData byteData = await rootBundle.load('assets/images/car.png');
     final Uint8List imageBytes = byteData.buffer.asUint8List();
 
     final img.Image? originalImage = img.decodeImage(imageBytes);
     if (originalImage == null) return;
 
-    final img.Image resized = img.copyResize(originalImage, width: 90, height: 90);
+    final img.Image resized = img.copyResize(
+      originalImage,
+      width: 90,
+      height: 90,
+    );
     final Uint8List resizedBytes = Uint8List.fromList(img.encodePng(resized));
 
     // Convert to ByteData
@@ -54,14 +56,14 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
       ),
     );
 
-    final List<Marker?> addedMarkers = await _navigationViewController!.addMarkers([options]);
+    final List<Marker?> addedMarkers = await _navigationViewController!
+        .addMarkers([options]);
     if (addedMarkers.isNotEmpty && addedMarkers.first != null) {
       setState(() {
         _markers.add(addedMarkers.first!);
       });
     }
   }
-
 
   Future<void> _onViewCreated(GoogleNavigationViewController controller) async {
     _navigationViewController = controller;
@@ -96,22 +98,21 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
       waypoints: <NavigationWaypoint>[
         NavigationWaypoint.withLatLngTarget(
           title: 'Grace Cathedral',
-          target: const LatLng(
-            latitude: 37.791957,
-            longitude: -122.412529,
-          ),
+          target: const LatLng(latitude: 37.791957, longitude: -122.412529),
         ),
       ],
       displayOptions: NavigationDisplayOptions(showDestinationMarkers: false),
     );
 
     final NavigationRouteStatus status =
-    await GoogleMapsNavigator.setDestinations(msg);
+        await GoogleMapsNavigator.setDestinations(msg);
 
     if (status == NavigationRouteStatus.statusOk) {
       await GoogleMapsNavigator.startGuidance();
       await GoogleMapsNavigator.simulator.simulateLocationsAlongExistingRoute();
-      await _navigationViewController?.followMyLocation(CameraPerspective.tilted);
+      await _navigationViewController?.followMyLocation(
+        CameraPerspective.tilted,
+      );
 
       _hideMessage();
       setState(() {
@@ -155,17 +156,19 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
         infoWindow: const InfoWindow(title: 'You', snippet: 'Current location'),
       );
 
-      final List<Marker?> addedMarkers = await _navigationViewController!.addMarkers([options]);
+      final List<Marker?> addedMarkers = await _navigationViewController!
+          .addMarkers([options]);
       if (addedMarkers.isNotEmpty && addedMarkers.first != null) {
         _movingMarker = addedMarkers.first;
       }
     } else {
       // Update the position of the existing marker
       final updatedMarker = _movingMarker!.copyWith(
-          options: _movingMarker!.options.copyWith(position: location)
+        options: _movingMarker!.options.copyWith(position: location),
       );
 
-      final List<Marker?> markers = await _navigationViewController!.updateMarkers([updatedMarker]);
+      final List<Marker?> markers = await _navigationViewController!
+          .updateMarkers([updatedMarker]);
       if (markers.isNotEmpty && markers.first != null) {
         _movingMarker = markers.first;
       }
@@ -193,7 +196,9 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _hideMessage() {
@@ -214,7 +219,10 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   }
 
   Widget _getNavInfoWidgetForStep(
-      BuildContext context, StepInfo stepInfo, int? metersToStep) {
+    BuildContext context,
+    StepInfo stepInfo,
+    int? metersToStep,
+  ) {
     final double screenWidth = MediaQuery.of(context).size.width;
     const TextStyle textStyle = TextStyle(fontSize: 12, color: Colors.white);
 
@@ -229,12 +237,18 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
               padding: const EdgeInsets.all(10),
               child: Column(
                 children: [
-                  Text('Maneuver', style: textStyle.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Maneuver',
+                    style: textStyle.copyWith(fontWeight: FontWeight.bold),
+                  ),
                   Text(stepInfo.maneuver.name, style: textStyle),
                   if (metersToStep != null)
                     Text(
                       formatRemainingDistance(metersToStep),
-                      style: textStyle.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: textStyle.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                 ],
               ),
@@ -249,11 +263,14 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
                     const SizedBox(height: 5),
                     Text('Road: ${stepInfo.fullRoadName}', style: textStyle),
                     const SizedBox(height: 5),
-                    Text('Instructions: ${stepInfo.fullInstructions}', style: textStyle),
+                    Text(
+                      'Instructions: ${stepInfo.fullInstructions}',
+                      style: textStyle,
+                    ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -263,31 +280,40 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
   void _showSteps(BuildContext context, NavInfo navInfo) {
     showModalBottomSheet(
       context: context,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Steps', style: TextStyle(fontSize: 20)),
-                ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Steps', style: TextStyle(fontSize: 20)),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 300,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children:
+                          navInfo.remainingSteps.map((step) {
+                            return _getNavInfoWidgetForStep(
+                              context,
+                              step,
+                              null,
+                            );
+                          }).toList(),
+                    ),
+                  ),
+                ),
               ],
             ),
-            SizedBox(
-              height: 300,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: navInfo.remainingSteps.map((step) {
-                    return _getNavInfoWidgetForStep(context, step, null);
-                  }).toList(),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -302,7 +328,7 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
               child: GoogleMapsNavigationView(
                 onViewCreated: _onViewCreated,
                 initialNavigationUIEnabledPreference:
-                NavigationUIEnabledPreference.disabled,
+                    NavigationUIEnabledPreference.disabled,
               ),
             ),
             const SizedBox(height: 10),
@@ -315,18 +341,28 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
                   child: Text('Add Marker'),
                 ),
                 ElevatedButton(
-                  onPressed: _navigationRunning ? _stopNavigation : _startNavigation,
-                  child: Text(_navigationRunning ? 'Stop navigation' : 'Start navigation'),
+                  onPressed:
+                      _navigationRunning ? _stopNavigation : _startNavigation,
+                  child: Text(
+                    _navigationRunning ? 'Stop navigation' : 'Start navigation',
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: _navigationRunning
-                      ? () async {
-                    final bool header = await _navigationViewController!.isNavigationHeaderEnabled();
-                    final bool footer = await _navigationViewController!.isNavigationFooterEnabled();
-                    await _navigationViewController!.setNavigationHeaderEnabled(!header);
-                    await _navigationViewController!.setNavigationFooterEnabled(!footer);
-                  }
-                      : null,
+                  onPressed:
+                      _navigationRunning
+                          ? () async {
+                            final bool header =
+                                await _navigationViewController!
+                                    .isNavigationHeaderEnabled();
+                            final bool footer =
+                                await _navigationViewController!
+                                    .isNavigationFooterEnabled();
+                            await _navigationViewController!
+                                .setNavigationHeaderEnabled(!header);
+                            await _navigationViewController!
+                                .setNavigationFooterEnabled(!footer);
+                          }
+                          : null,
                   child: const Text('Toggle header/footer'),
                 ),
               ],
@@ -351,7 +387,11 @@ class _TurnByTurnPageState extends State<TurnByTurnPage> {
       child: Column(
         children: [
           if (navInfo.currentStep != null)
-            _getNavInfoWidgetForStep(context, navInfo.currentStep!, navInfo.distanceToCurrentStepMeters),
+            _getNavInfoWidgetForStep(
+              context,
+              navInfo.currentStep!,
+              navInfo.distanceToCurrentStepMeters,
+            ),
           const SizedBox(height: 5),
           Card(
             color: Colors.green.shade400,

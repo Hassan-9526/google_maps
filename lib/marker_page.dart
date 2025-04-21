@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:image/image.dart' as img;
 
-
 class MarkerPage extends StatefulWidget {
   const MarkerPage({super.key});
 
@@ -32,7 +31,11 @@ class _MarkerPageState extends State<MarkerPage> {
     final img.Image? originalImage = img.decodeImage(imageBytes);
     if (originalImage == null) return;
 
-    final img.Image resized = img.copyResize(originalImage, width: 60, height: 60);
+    final img.Image resized = img.copyResize(
+      originalImage,
+      width: 60,
+      height: 60,
+    );
     final Uint8List resizedBytes = Uint8List.fromList(img.encodePng(resized));
 
     // Convert to ByteData
@@ -54,7 +57,8 @@ class _MarkerPageState extends State<MarkerPage> {
       ),
     );
 
-    final List<Marker?> addedMarkers = await _navigationViewController.addMarkers([options]);
+    final List<Marker?> addedMarkers = await _navigationViewController
+        .addMarkers([options]);
     if (addedMarkers.isNotEmpty && addedMarkers.first != null) {
       setState(() {
         _markers.add(addedMarkers.first!);
@@ -87,7 +91,7 @@ class _MarkerPageState extends State<MarkerPage> {
               child: GoogleMapsNavigationView(
                 onViewCreated: _onViewCreated,
                 initialNavigationUIEnabledPreference:
-                NavigationUIEnabledPreference.disabled,
+                    NavigationUIEnabledPreference.disabled,
               ),
             ),
             const SizedBox(height: 10),
@@ -100,11 +104,14 @@ class _MarkerPageState extends State<MarkerPage> {
                   child: const Text('Add Marker'),
                 ),
                 ElevatedButton(
-                  onPressed: _navigationRunning ? _stopNavigation : _startNavigation,
-                  child: Text(_navigationRunning ? 'Stop Navigation' : 'Start Navigation'),
+                  onPressed:
+                      _navigationRunning ? _stopNavigation : _startNavigation,
+                  child: Text(
+                    _navigationRunning ? 'Stop Navigation' : 'Start Navigation',
+                  ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

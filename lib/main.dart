@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:mapbox_flutter_map/custom_marker.dart';
+import 'package:mapbox_flutter_map/marker_move.dart';
+import 'package:mapbox_flutter_map/marker_page.dart';
+import 'package:mapbox_flutter_map/multiple_markers.dart';
 
 import 'home_page.dart';
 
@@ -16,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: TurnByTurnPage(),
+      home: MultipleMarkerMovingPage(),
     );
   }
 }
